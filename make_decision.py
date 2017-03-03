@@ -32,7 +32,3 @@ def make_decision(weigths_list, mode):
             index=make_distributed_decision(weigths_list)
 
     return index
-
-
-
-

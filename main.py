@@ -1,4 +1,4 @@
-import multiplicative_weigths as mw
+import make_decision as mw
 
 print("Hello World!")
 
