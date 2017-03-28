@@ -37,7 +37,7 @@ def multiplicative_weigths (data, eta):
         data.set_value(index, 'Result', data.get_value(index,chosen_specialist))
 
         for specialist in range(1,specialists_num+1):
-            gains_vec[specialist-1]= gains_vec[specialist-1]*(1+data.get_value(index,data.columns[specialist]))
+            gains_vec[specialist-1]= gains_vec[specialist-1]*(1+data.get_value(index,data.columns[specialist]))*eta
 
         #print("This is the row: %s") % row
         #print("This is the date: %s") % row[[0]]

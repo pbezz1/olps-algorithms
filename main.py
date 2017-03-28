@@ -2,11 +2,11 @@ import multiplicative_weigths as mw
 import load_files as lf
 import matplotlib
 
-matplotlib.style.use('ggplot')
+#matplotlib.style.use('ggplot')
 
 #Example
 result = lf.build_data('data/')
-result = mw.multiplicative_weigths(result, 0.5)
+result = mw.multiplicative_weigths(result, 0.3)
 
 specialists_num = len(result.columns) - 3
 for specialist in range(1, specialists_num + 1):
