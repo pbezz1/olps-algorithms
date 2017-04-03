@@ -1,4 +1,5 @@
 from __future__ import division
+from enum import Enum
 import numpy as np
 
 #Makes decision based on distribution criteria given by weigths_list
@@ -19,8 +20,9 @@ def make_distributed_decision (weigths_list):
     return index
 
 #Runs the multiplicative weigths algorithm based on given dataframe 'data' and parameter eta
+# mode=1 is linear update; mode=2 is exponential update
 #Each column represents a specialist, except for the first one that is the date
-def multiplicative_weigths (data, eta):
+def multiplicative_weigths (data, eta, mode):
     #gets the number of specialists and set the initial gains vector
     specialists_num=len(data.columns)-1
     gains_vec= [1] * specialists_num
@@ -37,10 +39,14 @@ def multiplicative_weigths (data, eta):
         data.set_value(index, 'Result', data.get_value(index,chosen_specialist))
 
         for specialist in range(1,specialists_num+1):
-            gains_vec[specialist-1]= gains_vec[specialist-1]*(1+data.get_value(index,data.columns[specialist]))*eta
+            if(mode==1):
+                gains_vec[specialist-1]= gains_vec[specialist-1]*(1+eta*data.get_value(index,data.columns[specialist]))
+            elif(mode==2):
+                gains_vec[specialist - 1] = gains_vec[specialist - 1] * np.exp(eta*data.get_value(index,data.columns[specialist]))
 
         #print("This is the row: %s") % row
         #print("This is the date: %s") % row[[0]]
         #for specialist in range(1,specialists_num+1):
         #    print ("This is specialist number %d value: %f") % (specialist, row[[specialist]])
     return data
+

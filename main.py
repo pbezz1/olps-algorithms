@@ -6,7 +6,7 @@ import matplotlib
 
 #Example
 result = lf.build_data('data/')
-result = mw.multiplicative_weigths(result, 0.3)
+result = mw.multiplicative_weigths(result, 0.3, 2)
 
 specialists_num = len(result.columns) - 3
 for specialist in range(1, specialists_num + 1):
