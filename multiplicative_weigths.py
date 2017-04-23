@@ -1,6 +1,6 @@
 from __future__ import division
-from enum import Enum
 import numpy as np
+import warnings
 
 def calc_probabilities(vec):
     #calculate vec sum
@@ -35,19 +35,56 @@ def multiplicative_weigths_exp_update(data, eta, gains_vec, specialists_num, ind
     for specialist in range(specialists_num):
         gains_vec[specialist] = gains_vec[specialist] * np.exp(eta * data.get_value(index, data.columns[specialist+1]))
 
-#Implements the adaptive regret rule
+#Implements the adaptive regret rule for both static and dynamic beta values
 def adaptive_regret_update(data, eta, gains_vec, specialists_num, index, beta):
     multiplicative_weigths_exp_update(data, eta, gains_vec, specialists_num, index)
 
     gains_vec = calc_probabilities(gains_vec)
 
+    myBeta=beta
+    if(isinstance(beta, (list, np.ndarray))):
+        myBeta=beta[index]
+
     for specialist in range(specialists_num):
-        gains_vec[specialist] =beta*((1-beta)*gains_vec[specialist])
+        gains_vec[specialist] =(myBeta/specialists_num)+((1-myBeta)*gains_vec[specialist])
+
+#makes a random prediction for index based on the gains_vector
+def make_prediction(data,gains_vec,index):
+    chosen_specialist = make_distributed_decision(gains_vec) + 1
+    chosen_specialist = data.columns[chosen_specialist]
+
+    data.set_value(index, 'Chosen Specialist', chosen_specialist)
+    data.set_value(index, 'Result', data.get_value(index, chosen_specialist))
+
+#makes a prediction using each portfolio proportional to his weight
+def make_deterministic_prediction(data,gains_vec,specialist_num,index):
+    gains_vec = calc_probabilities(gains_vec)
+    chosen_specialist = 'BALANCED'
+
+    balanced_return=0.0
+    #calculate the return of balanced portfolio
+    for specialist in range(specialist_num):
+        balanced_return = balanced_return + (gains_vec[specialist]*data.get_value(index,data.columns[specialist+1]))
+
+
+    data.set_value(index, 'Chosen Specialist', chosen_specialist)
+    data.set_value(index, 'Result', balanced_return)
+
 
 #Runs the multiplicative weigths algorithm based on given dataframe 'data' and parameter eta
 # mode=1 is linear update; mode=2 is exponential update
 #Each column represents a specialist, except for the first one that is the date
-def multiplicative_weigths (data, eta, mode):
+def multiplicative_weigths (raw_data, eta, mode, is_random=True, beta=None):
+    #assertive: if the mode is adaptive regret and there is no beta defined, then a warning is raised
+    if(mode==3 and beta==None):
+         raise ValueError("No beta defined for adaptive regret")
+
+    #assertive: if mode is adaptive regret and beta is an array, it must be the same size as data rows
+    if(mode==3 and isinstance(beta, (list, np.ndarray)) and not beta.__len__() == raw_data.__len__()):
+        raise ValueError("List of betas is not the same size as data points")
+
+    data=raw_data.copy()
+
     #gets the number of specialists and set the initial gains vector
     specialists_num=len(data.columns)-1
     gains_vec= [1] * specialists_num
@@ -56,21 +93,19 @@ def multiplicative_weigths (data, eta, mode):
     data['Chosen Specialist'] = ['None'] * len(data)
     data['Result'] = [0.0] * len(data)
 
-    for index, row in data.iterrows():
-        chosen_specialist = make_distributed_decision(gains_vec)+1
-        chosen_specialist = data.columns[chosen_specialist]
 
-        data.set_value(index, 'Chosen Specialist', chosen_specialist)
-        data.set_value(index, 'Result', data.get_value(index,chosen_specialist))
+    for index, row in data.iterrows():
+        if(is_random):
+            make_prediction(data,gains_vec,index)
+        else:
+            make_deterministic_prediction(data,gains_vec,specialists_num,index)
 
         if(mode==1):
             multiplicative_weigths_linear_update(data,eta,gains_vec,specialists_num,index)
         elif(mode==2):
             multiplicative_weigths_exp_update(data, eta, gains_vec, specialists_num, index)
-
         #print("This is the row: %s") % row
         #print("This is the date: %s") % row[[0]]
         #for specialist in range(1,specialists_num+1):
         #    print ("This is specialist number %d value: %f") % (specialist, row[[specialist]])
     return data
-
