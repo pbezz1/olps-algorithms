@@ -104,8 +104,20 @@ def multiplicative_weigths (raw_data, eta, mode, is_random=True, beta=None):
             multiplicative_weigths_linear_update(data,eta,gains_vec,specialists_num,index)
         elif(mode==2):
             multiplicative_weigths_exp_update(data, eta, gains_vec, specialists_num, index)
-        #print("This is the row: %s") % row
-        #print("This is the date: %s") % row[[0]]
-        #for specialist in range(1,specialists_num+1):
-        #    print ("This is specialist number %d value: %f") % (specialist, row[[specialist]])
+            
     return data
+
+#Function to build risk sensitive data as described on 
+#Risk-Sensitive Online Learning paper by 
+#Eyal Even-Dar, Michael Kearns, and Jennifer Wortman
+def risk_sensivite(raw_data,window):
+    window=10
+    risk_mod_data=raw_data.copy()
+    columns = raw_data.columns
+    for i in range(1,len(columns)):
+        series=risk_mod_data[columns[i]]
+        series_stdev=series.rolling(window=window,center=False).std()
+        series_stdev=series_stdev.fillna(0)
+        series_transform=series-series_stdev
+        risk_mod_data[columns[i]]=series_transform
+    return risk_mod
