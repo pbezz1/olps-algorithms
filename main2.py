@@ -1,8 +1,8 @@
 %matplotlib inline
 import multiplicative_weigths as mw
-import load_files as lf
 import numpy as np
 import optimization as opt
+import load_factors as lf
 import time
 import matplotlib
 
@@ -18,15 +18,20 @@ def plot_results(result):
     result.plot(x='date', y=result.columns[specialists_num + 3:2 * specialists_num + 4])
 
 #Example
-raw_data = lf.build_data('data/')
+#initialize factors and assets list
+assets = ['ABEV3','BBDC4','PETR4','VALE5']
+factors = ['percentage_return']
+assets_list=lf.load_assets(assets,factors)
+raw_data=lf.create_factor_df(assets_list=assets_list,factor_name='percentage_return')
+raw_data=raw_data.dropna(how='any')
 
 #runs the algorithm
 try:
     start = time.time()
     beta = np.random.random(raw_data.__len__())
-    risk_sensivite_data = mw.risk_sensivite(raw_data,30)
-    result = mw.multiplicative_weigths(raw_data, 0.3, 2, 90, risk_sensivite_data)
-    #result = mw.multiplicative_weigths(raw_data, 0.3, 2, 90, raw_data)
+    risk_sensitive_data = mw.risk_sensitive(raw_data,30)
+    result = mw.multiplicative_weigths(raw_data, 0.3, 90, risk_sensitive_data)  
+    #result = mw.multiplicative_weigths(raw_data, 0.3, 90, raw_data)  
     end = time.time()
     plot_results(result)
     totalReturn=result['Result'].sum()
