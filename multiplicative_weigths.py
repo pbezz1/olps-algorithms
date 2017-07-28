@@ -2,6 +2,7 @@ from __future__ import division
 import numpy as np
 import warnings
 
+#Returns a noramlized version of 'vec'
 def calc_probabilities(vec):
     #calculate vec sum
     vec_sum=0
@@ -25,32 +26,6 @@ def make_distributed_decision (weigths_list):
     index = np.random.choice(indexes , p=probabilities_list )
     return index
 
-#Linear update rule for multiplicative weigths method
-def multiplicative_weigths_linear_update(data, eta, gains_vec, specialists_num, index):
-    for specialist in range(specialists_num):
-            gains_vec[specialist] = gains_vec[specialist] * (1 + eta * data.get_value(index, data.columns[specialist+1]))
-
-#Exponential update rule for multiplicative weigths method
-def multiplicative_weigths_exp_update(update_returns, eta, gains_vec, specialists_num, index):
-    for specialist in range(specialists_num):
-        gains_vec[specialist] = gains_vec[specialist] * np.exp(eta * (update_returns[specialist]-1))
-    
-    gains_vec = calc_probabilities(gains_vec)
-
-    return gains_vec
-
-#Implements the adaptive regret rule for both static and dynamic beta values
-def adaptive_regret_update(data, eta, gains_vec, specialists_num, index, beta):
-    multiplicative_weigths_exp_update(data, eta, gains_vec, specialists_num, index)
-
-    gains_vec = calc_probabilities(gains_vec)
-
-    myBeta=beta
-    if(isinstance(beta, (list, np.ndarray))):
-        myBeta=beta[index]
-
-    for specialist in range(specialists_num):
-        gains_vec[specialist] =(myBeta/specialists_num)+((1-myBeta)*gains_vec[specialist])
 
 #makes a random prediction for index based on the gains_vector
 def make_prediction(data,gains_vec,index):
@@ -61,17 +36,55 @@ def make_prediction(data,gains_vec,index):
     data.set_value(index, 'Result', data.get_value(index, chosen_specialist))
     
 
-#Runs the multiplicative weigths algorithm based on given dataframe 'data' and parameter eta
-# mode=1 is linear update; mode=2 is exponential update
-#Each column represents a specialist, except for the first one that is the date
-def multiplicative_weigths (raw_data, eta, mode, period, update_data, beta=None):
+#Linear update rule for multiplicative weigths method
+def multiplicative_weigths_linear_update(update_returns, eta, gains_vec, specialists_num):     
+    for specialist in range(specialists_num):
+        gains_vec[specialist] = gains_vec[specialist] * ((1 + eta) * update_returns[specialist]-1)
+    
+    gains_vec = calc_probabilities(gains_vec)
+    
+    return gains_vec
+
+
+#Exponential update rule for multiplicative weigths method
+def multiplicative_weigths_exp_update(update_returns, eta, gains_vec, specialists_num):
+    for specialist in range(specialists_num):
+        gains_vec[specialist] = gains_vec[specialist] * np.exp(eta * (update_returns[specialist]-1))
+    
+    gains_vec = calc_probabilities(gains_vec)
+
+    return gains_vec
+
+#Implements the adaptive regret rule for both static and dynamic beta values
+def adaptive_regret_update(update_returns, eta, gains_vec, specialists_num, beta):
+    gains_vec = multiplicative_weigths_exp_update(update_returns, eta, gains_vec, specialists_num)
+
+    myBeta=beta
+    #if(isinstance(beta, (list, np.ndarray))):
+    #    myBeta=beta[index]
+    
+    for specialist in range(specialists_num):
+        gains_vec[specialist] =(myBeta/specialists_num)+((1-myBeta)*gains_vec[specialist])
+    
+    gains_vec = calc_probabilities(gains_vec)
+
+    return gains_vec
+
+#Runs the multiplicative weigths algorithm
+#Parameters:
+#'raw_data': dataframe with each column representing a specialist, except for the first one that is the date
+#'eta': learning rate parameter
+#'period': business days between each rebalance
+#'update_data': dataframe with the same shape as raw_data, used only to calculate the gains (useful for risk sensitive)
+#'beta': fixed share parameter. if none is given, the original version of the algorithm is used
+def multiplicative_weigths (raw_data, eta, period, update_data, beta=None):
     #assertive: if the mode is adaptive regret and there is no beta defined, then a warning is raised
-    if(mode==3 and beta==None):
-         raise ValueError("No beta defined for adaptive regret")
+    #if(mode==3 and beta==None):
+    #     raise ValueError("No beta defined for adaptive regret")
 
     #assertive: if mode is adaptive regret and beta is an array, it must be the same size as data rows
-    if(mode==3 and isinstance(beta, (list, np.ndarray)) and not beta.__len__() == raw_data.__len__()):
-        raise ValueError("List of betas is not the same size as data points")
+    #if(mode==3 and isinstance(beta, (list, np.ndarray)) and not beta.__len__() == raw_data.__len__()):
+    #    raise ValueError("List of betas is not the same size as data points")
 
     data=raw_data.copy()
 
@@ -96,8 +109,13 @@ def multiplicative_weigths (raw_data, eta, mode, period, update_data, beta=None)
         data.set_value(index, 'Chosen Specialist', 'Balanced')
         data.set_value(index, 'Result', balanced_return)
         
+        #if period has passed, update gains vector
         if(periodOffset>=period):
-            gains_vec = multiplicative_weigths_exp_update(update_returns, eta, gains_vec, specialists_num, index)
+            if(beta is None):
+                gains_vec = multiplicative_weigths_exp_update(update_returns, eta, gains_vec, specialists_num)
+            else:
+                gains_vec = adaptive_regret_update(update_returns, eta, gains_vec, specialists_num, beta)
+            #reset returns for the next period
             update_returns= [1] * specialists_num
             periodOffset=0
             
@@ -109,9 +127,10 @@ def multiplicative_weigths (raw_data, eta, mode, period, update_data, beta=None)
     return data
 
 #Function to build risk sensitive data as described on 
-#Risk-Sensitive Online Learning paper by 
-#Eyal Even-Dar, Michael Kearns, and Jennifer Wortman
-def risk_sensivite(raw_data,window):
+#"Risk-Sensitive Online Learning" by Eyal Even-Dar, Michael Kearns, and Jennifer Wortman
+#'raw_data': dataframe with each column representing a specialist, except for the first one that is the date
+#'window': std rolling window used to risk adjusting
+def risk_sensitive(raw_data,window):
     risk_mod_data=raw_data.copy()
     columns = raw_data.columns
     for i in range(1,len(columns)):
