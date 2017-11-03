@@ -3,13 +3,14 @@ import os
 import numpy as np
 import datetime
 from asset import Asset
+from pandas.tests.io.parser import skiprows
 
 #add factor to asset
 def add_factor(asset, file_path, factor_name):
     if (os.stat(file_path).st_size != 0):
-        data = pd.DataFrame.from_csv(file_path,index_col=None,header=None)
+        data = pd.DataFrame.from_csv(file_path,index_col=None,header='infer')
         data.columns = ['date',factor_name]
-        data['date']=pd.to_datetime(data['date'], format='%m/%d/%Y').dt.date
+        data['date']=pd.to_datetime(data['date'], format='%Y-%m-%d').dt.date
         asset.add_factor(factor_name, data)
 
 #loads all factors files for all files that have returns
@@ -57,7 +58,7 @@ def create_extra_factor(assets_list, numer_factor, denom_factor, extra_factor_na
 #Creates a dataframe with the factors from all assets in 'assets_list'
 #'assets list': list of Asset 
 #'factor name': string with factor name
-def create_factor_df(assets_list, factor_name):
+def create_factor_df(assets_list, factor_name, isForwardFill):
     data = None
     for asset in assets_list:
         factor_series=asset.get_factor(factor_name)
@@ -72,14 +73,16 @@ def create_factor_df(assets_list, factor_name):
     if(data is not None):
         data=data.sort_values(by=['date'])
         data = data.reset_index(drop=True)
+        if(isForwardFill):
+            data = data.fillna(method='ffill', limit=252) #forward propagation of factors, with 252 as limit
 
 
     return data
 
 
 #Calculate the daily returns for a factor based ranked portfolio
-#'assets list': list of Asset 
-#'factor name': string with factor name
+#'factor_df': dataframe with factors for each asset
+#'return': dataframe with retuns for each asset
 #'portfolio size': number of assets in the portfolio
 #'rebalance_window': period between each rebalance
 def create_factor_portfolio(factor_df, returns, portfolio_size, rebalance_window):
@@ -91,11 +94,13 @@ def create_factor_portfolio(factor_df, returns, portfolio_size, rebalance_window
     #first portfolio is empty
     portfolio=[]
     factor_index=0
-    next_rebalance_date=returns['date'][factor_index]+datetime.timedelta(days=rebalance_window)
+    next_rebalance_date=returns['date'][factor_index]
     
     portfolio_returns=[]
     
-    for index, row in returns.iterrows():       
+    for index, row in returns.iterrows():  
+        while(row['date'] < factor_df['date'][0]):
+            continue
         while(row['date'] >= next_rebalance_date):    
             while((factor_index+1 < len(factor_df)) and (next_rebalance_date > factor_df['date'][factor_index+1])):
                 factor_index=factor_index+1

@@ -11,8 +11,7 @@ import numpy as np
 from datetime import datetime
 
 class TestLoadFactors(unittest.TestCase):
-    
-    
+
     def test_load_assets(self):
         actual_assets = lf.load_assets(['test_factor1'], '../test_data/')
         
@@ -67,7 +66,7 @@ class TestLoadFactors(unittest.TestCase):
     def test_create_factor_df(self):
         actual_assets = lf.load_assets(['test_factor1','test_factor2'], '../test_data/')
         
-        ret_df = lf.create_factor_df(actual_assets, 'return')
+        ret_df = lf.create_factor_df(actual_assets, 'return', True)
         
         expected_return_df = pd.DataFrame([(datetime.strptime('2017-10-01', "%Y-%m-%d").date(),0.10,np.NaN), 
                                           (datetime.strptime('2017-10-02', "%Y-%m-%d").date(),-0.10,-0.10),
@@ -77,20 +76,25 @@ class TestLoadFactors(unittest.TestCase):
         self.assertEquals(list(ret_df['date']), list(expected_return_df['date']), 'merge returns dates are wrong')
         
     def test_create_factor_portfolio(self):
-        return_df = pd.DataFrame([(datetime.strptime('2017-10-01', "%Y-%m-%d").date(),0.10,0.20,0.05), 
-                                          (datetime.strptime('2017-10-02', "%Y-%m-%d").date(),np.NaN,-0.20,0.05),
-                                          (datetime.strptime('2017-10-03', "%Y-%m-%d").date(),0.10,np.NaN,0.05)],
+        return_df = pd.DataFrame([(datetime.strptime('2017-10-02', "%Y-%m-%d").date(),0.20,0.05,0.10),
+                                          (datetime.strptime('2017-10-03', "%Y-%m-%d").date(),0.05,0.10,0.20)],
                                  columns=['date','ASSET1','ASSET2','ASSET3'])
         factor_df = pd.DataFrame([(datetime.strptime('2017-10-01', "%Y-%m-%d").date(),10,9,8), 
-                                          (datetime.strptime('2017-10-02', "%Y-%m-%d").date(),8,9,10),
+                                          (datetime.strptime('2017-10-02', "%Y-%m-%d").date(),np.NaN,np.NaN,10),
                                           (datetime.strptime('2017-10-03', "%Y-%m-%d").date(),9,10,8)],
                                  columns=['date','ASSET1','ASSET2','ASSET3'])
         
-        
-        
         (df,df_portfolios) = lf.create_factor_portfolio(factor_df, return_df, 2, 1)
         
-        print('end')
+        
+        #standart portfolio
+        self.assertEquals(df_portfolios['portfolio'][0],['ASSET1','ASSET2'],'portfolio not matching')
+        self.assertAlmostEqual(df['return'][0], 0.125, 3, 'portfolio return not matching')
+        
+        #missing one asset portfolio
+        self.assertEquals(df_portfolios['portfolio'][1],['ASSET3'],'portfolio not matching') 
+        self.assertAlmostEqual(df['return'][1], 0.20, 3, 'portfolio return not matching')
+        
         
 if __name__ == '__main__':
     unittest.main()
