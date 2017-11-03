@@ -1,5 +1,5 @@
-import multiplicative_weigths as mw
 import numpy as np
+import multiplicative_weigths as mw
 
 #optimizes multiplicative weigths method parameter eta, using a monte carlo algorithm
 def optimizeEta(data, steps, avgSteps, mode, isRandom, beta=None):

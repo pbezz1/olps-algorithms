@@ -1,10 +1,9 @@
-%matplotlib inline
 import multiplicative_weigths as mw
 import numpy as np
-import optimization as opt
 import load_factors as lf
 import time
 import matplotlib
+
 
 def plot_results(result):
     specialists_num = len(result.columns) - 3
