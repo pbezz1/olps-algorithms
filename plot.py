@@ -4,6 +4,8 @@ Created on Nov 3, 2017
 @author: ckubudi
 '''
 
+import matplotlib.pyplot as mp
+
 def plot_results(result):
     specialists_num = len(result.columns) - 3
     for specialist in range(1, specialists_num + 1):
@@ -18,5 +20,8 @@ def plot_results(result):
     
 
 def plot_cumulative_returns(data):
-     data['cumulative result'] = data['result'].cumsum(axis=0)
-     data.plot(x='date', y='cumulative_result')
+     data['cumulative return'] = data['return'].cumsum(axis=0)
+          
+     mp.ion()
+     mp.plot(data['date'],data['cumulative return'])
+     mp.show()

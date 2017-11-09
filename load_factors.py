@@ -91,20 +91,22 @@ def create_factor_portfolio(factor_df, returns, portfolio_size, rebalance_window
     factor_used_dates=[]
     #assets_number=len(assets_list)
     
+    #crop returns to match first factor date
+    returns = returns[returns.date > factor_df.date[0]]
+    returns = returns.reset_index(drop=True)
+    
     #first portfolio is empty
     portfolio=[]
     factor_index=0
     next_rebalance_date=returns['date'][factor_index]
     
+    portfolio_dates=[]
     portfolio_returns=[]
     
     for index, row in returns.iterrows():  
-        while(row['date'] < factor_df['date'][0]):
-            continue
         while(row['date'] >= next_rebalance_date):    
             while((factor_index+1 < len(factor_df)) and (next_rebalance_date > factor_df['date'][factor_index+1])):
                 factor_index=factor_index+1
-            #to do - check if last factor date is recent enough
             factors=factor_df.loc[factor_index,factor_df.columns[1:len(factor_df.columns)]]   
             factors=pd.Series.sort_values(factors,ascending=False) 
             #build portfolio
@@ -128,11 +130,12 @@ def create_factor_portfolio(factor_df, returns, portfolio_size, rebalance_window
             p_return=p_return/len(portfolio)
 
         #set p_return
+        portfolio_dates.append(row['date'])
         portfolio_returns.append(p_return)
         
     
     df = pd.DataFrame(columns=['date','return'])
-    df['date']=returns['date']
+    df['date']=portfolio_dates
     df['return']=portfolio_returns
     
     df_portfolios = pd.DataFrame(columns=['date','factor_date','portfolio'])
