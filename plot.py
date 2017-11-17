@@ -20,8 +20,21 @@ def plot_results(result):
     
 
 def plot_cumulative_returns(data):
-     data['cumulative return'] = data['return'].cumsum(axis=0)
-          
-     mp.ion()
-     mp.plot(data['date'],data['cumulative return'])
-     mp.show()
+    data['cumulative return'] = data['return'].cumsum(axis=0)
+     
+    mp.ion()
+    mp.plot(data['date'],data['cumulative return'])
+    mp.show()
+     
+#Calculate the sharpe ratio for a given df of % returns
+def get_yrly_sharpe_ratio(data):
+    yrly_mean=data['return'].mean()*252;
+    yrly_std=data['return'].std()*(252^(1/2));
+    
+    return (yrly_mean/yrly_std);
+    
+    
+        
+    
+    
+    
