@@ -15,28 +15,10 @@ def calc_probabilities(vec):
         probabilities_list.append(elem/vec_sum)
 
     return probabilities_list
-
-#Makes decision based on distribution criteria given by weigths_list
-def make_distributed_decision (weigths_list):
-    #calculate probabilities
-    probabilities_list = calc_probabilities(weigths_list)
-
-    #sample and choose
-    indexes = np.arange(0, len(weigths_list))
-    index = np.random.choice(indexes , p=probabilities_list )
-    return index
-
-
-#makes a random prediction for index based on the gains_vector
-def make_prediction(data,gains_vec,index):
-    chosen_specialist = make_distributed_decision(gains_vec) + 1
-    chosen_specialist = data.columns[chosen_specialist]
-
-    data.set_value(index, 'Chosen Specialist', chosen_specialist)
-    data.set_value(index, 'Result', data.get_value(index, chosen_specialist))
     
 
 #Linear update rule for multiplicative weigths method
+#not in use
 def multiplicative_weigths_linear_update(update_returns, eta, gains_vec, specialists_num):     
     for specialist in range(specialists_num):
         gains_vec[specialist] = gains_vec[specialist] * ((1 + eta) * update_returns[specialist]-1)
@@ -77,7 +59,7 @@ def adaptive_regret_update(update_returns, eta, gains_vec, specialists_num, beta
 #'period': business days between each rebalance
 #'update_data': dataframe with the same shape as raw_data, used only to calculate the gains (useful for risk sensitive)
 #'beta': fixed share parameter. if none is given, the original version of the algorithm is used
-def multiplicative_weigths (raw_data, eta, period, update_data, beta=None):
+def multiplicative_weights (raw_data, eta, period, update_data, beta=None):
     #assertive: if the mode is adaptive regret and there is no beta defined, then a warning is raised
     #if(mode==3 and beta==None):
     #     raise ValueError("No beta defined for adaptive regret")
@@ -90,11 +72,10 @@ def multiplicative_weigths (raw_data, eta, period, update_data, beta=None):
 
     #gets the number of specialists and set the initial gains vector
     specialists_num=len(data.columns)-1
-    gains_vec= [1] * specialists_num
+    gains_vec= [1/specialists_num] * specialists_num
 
     #Creates results columns
-    data['Chosen Specialist'] = ['None'] * len(data)
-    data['Result'] = [0.0] * len(data)
+    data['result'] = [0.0] * len(data)
 
     periodOffset=period
     
@@ -106,9 +87,11 @@ def multiplicative_weigths (raw_data, eta, period, update_data, beta=None):
         for specialist in range(specialists_num):
             balanced_return = balanced_return + (gains_vec[specialist]*data.get_value(index,data.columns[specialist+1]))
 
-        data.set_value(index, 'Chosen Specialist', 'Balanced')
-        data.set_value(index, 'Result', balanced_return)
+        data.set_value(index, 'result', balanced_return)
         
+        for specialist in range(specialists_num):
+            update_returns[specialist] = update_returns[specialist] * (1+update_data.get_value(index, update_data.columns[specialist+1]))
+     
         #if period has passed, update gains vector
         if(periodOffset>=period):
             if(beta is None):
@@ -119,12 +102,10 @@ def multiplicative_weigths (raw_data, eta, period, update_data, beta=None):
             update_returns= [1] * specialists_num
             periodOffset=0
             
-        periodOffset=periodOffset+1
-        
-        for specialist in range(specialists_num):
-            update_returns[specialist] = update_returns[specialist] * (1+update_data.get_value(index, update_data.columns[specialist+1]))
-        
+        periodOffset=periodOffset+1     
+      
     return data
+
 
 #Function to build risk sensitive data as described on 
 #"Risk-Sensitive Online Learning" by Eyal Even-Dar, Michael Kearns, and Jennifer Wortman
