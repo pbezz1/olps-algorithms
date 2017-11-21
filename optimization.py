@@ -18,7 +18,7 @@ def optimizeEta(data, steps, avgSteps, mode, isRandom, beta=None):
             #Runs avgSteps times to soften the randomized component
             avg_return=0
             for i in range(avgSteps):
-                result = mw.multiplicative_weigths(data,eta,mode,isRandom, beta)
+                result = mw.multiplicative_weights(data,eta,mode,isRandom, beta)
                 avg_return = avg_return + result['Result'].sum()
 
             avg_return=avg_return/avgSteps
