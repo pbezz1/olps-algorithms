@@ -3,7 +3,7 @@ import numpy as np
 import warnings
 
 #Returns a noramlized version of 'vec'
-def calc_probabilities(vec):
+def normalize(vec):
     #calculate vec sum
     vec_sum=0
     for elem in vec:
@@ -23,7 +23,7 @@ def multiplicative_weigths_linear_update(update_returns, eta, gains_vec, special
     for specialist in range(specialists_num):
         gains_vec[specialist] = gains_vec[specialist] * ((1 + eta) * update_returns[specialist]-1)
     
-    gains_vec = calc_probabilities(gains_vec)
+    gains_vec = normalize(gains_vec)
     
     return gains_vec
 
@@ -33,7 +33,7 @@ def multiplicative_weigths_exp_update(update_returns, eta, gains_vec, specialist
     for specialist in range(specialists_num):
         gains_vec[specialist] = gains_vec[specialist] * np.exp(eta * (update_returns[specialist]-1))
     
-    gains_vec = calc_probabilities(gains_vec)
+    gains_vec = normalize(gains_vec)
 
     return gains_vec
 
@@ -48,7 +48,7 @@ def adaptive_regret_update(update_returns, eta, gains_vec, specialists_num, beta
     for specialist in range(specialists_num):
         gains_vec[specialist] =(myBeta/specialists_num)+((1-myBeta)*gains_vec[specialist])
     
-    gains_vec = calc_probabilities(gains_vec)
+    gains_vec = normalize(gains_vec)
 
     return gains_vec
 

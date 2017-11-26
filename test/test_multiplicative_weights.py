@@ -6,10 +6,27 @@ Created on Nov 6, 2017
 import unittest
 import multiplicative_weigths as mw 
 import pandas as pd
-import numpy as np
 from datetime import datetime
 
 class Test(unittest.TestCase):
+    
+    #Test normalize function
+    def test_normalize(self):
+        vec1 = [2.0, 3.0, 5.0]
+        vec1 = mw.normalize(vec1)
+        exp_vec1 = [0.2,0.3,0.5]
+        
+        for i in range(0,len(vec1)):
+            self.assertAlmostEqual(exp_vec1[i], vec1[i], 2, "normalization not working")
+        
+        vec2 = [0.02,0.03,0.05]
+        vec2 = mw.normalize(vec2)
+        exp_vec2 = [0.2,0.3,0.5]
+        
+        for i in range(0,len(vec2)):
+            self.assertAlmostEqual(exp_vec2[i], vec2[i], 2, "normalization not working")
+    
+
 
     #Testing if the returns are exactly as expected
     def test_returns(self):
@@ -74,11 +91,11 @@ class Test(unittest.TestCase):
         res_return_1 = result_df_1['result']
         res_return_2 = result_df_2['result']
         
-        delta_0=res_return_1[0]-res_return_2[0]
+        delta=res_return_1[0]-res_return_2[0]
         delta_1=res_return_1[1]-res_return_2[1]
         delta_2=res_return_1[2]-res_return_2[2]
         
-        self.assertTrue(delta_0 = 0, 'first round update is wrong')
+        self.assertEquals(0,delta)
         self.assertTrue(delta_1 < 0, 'learning rate is not working')
         self.assertTrue(delta_2 < 0, 'learning rate is not working')
     
