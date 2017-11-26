@@ -13,8 +13,14 @@ class Algorithm(object):
     def __init__(self):
         pass
     
+    def before_backtest(self, data):
+        """to do before backtest
+        :data: dataframe with returns and dates
+        """
+        pass 
     
-    def update_weights(self, current_weights, data):
+    
+    def update_weights(self, current_index, current_weights, data):
         """ Update the weights
         """
         return current_weights
@@ -26,7 +32,7 @@ class Algorithm(object):
     
     def run(self, data):
         """Runs the algorithm
-        :data: dataframe with date and returns for each asset
+        :data: dataframe with each column representing a specialist, except for the first one that is the date        
         """
         columns = ['date','weights','result']
         temp = [(datetime.now().date(),[],0.0)] * len(data)  
@@ -35,6 +41,8 @@ class Algorithm(object):
         #gets the number of specialists and set the initial gains vector
         specialists_num=len(data.columns)-1
         weights_vec=self.getUCRP_weights(specialists_num)
+        
+        self.before_backtest(data)
         
         for index, row in data.iterrows():
             balanced_return=0.0
@@ -45,6 +53,6 @@ class Algorithm(object):
             result.set_value(index, 'weights', weights_vec)
             result.set_value(index, 'result', balanced_return)
                             
-            weights_vec = self.update_weights(weights_vec, data.iloc[0:index+1,:])
+            weights_vec = self.update_weights(index, weights_vec, data.iloc[0:index+1,:])
     
         return result

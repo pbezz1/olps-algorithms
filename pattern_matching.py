@@ -92,7 +92,7 @@ class Pattern_Matching(Algorithm):
         return res.x
         
     
-    def update_weights(self, current_weights, data):
+    def update_weights(self, current_index, current_weights, data):
         data_len=len(data)
         current_window = data.iloc[data_len-self.window_size:data_len,1:len(data.columns)].values.flatten()
         

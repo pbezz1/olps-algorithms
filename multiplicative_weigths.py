@@ -1,112 +1,102 @@
 from __future__ import division
 import numpy as np
-import warnings
+from algorithm import Algorithm
 
-#Returns a noramlized version of 'vec'
-def normalize(vec):
-    #calculate vec sum
-    vec_sum=0
-    for elem in vec:
-        vec_sum+=elem
 
-    #calculate probabilities
-    probabilities_list = []
-    for elem in vec:
-        probabilities_list.append(elem/vec_sum)
-
-    return probabilities_list
+class Multiplicative_Weights(Algorithm):
     
-
-#Linear update rule for multiplicative weigths method
-#not in use
-def multiplicative_weigths_linear_update(update_returns, eta, gains_vec, specialists_num):     
-    for specialist in range(specialists_num):
-        gains_vec[specialist] = gains_vec[specialist] * ((1 + eta) * update_returns[specialist]-1)
+    def __init__(self, eta, period, beta=None):
+        """Runs the multiplicative weigths algorithm
+        :eta: learning rate parameter
+        :period: business days between each rebalance
+        :beta: fixed share parameter. if none is given, the original version of the algorithm is used
+        """
+        super(Multiplicative_Weights, self).__init__()
+        self.eta=eta
+        self.period=period
+        self.beta=beta
+        self.periodOffset=period
+        self.update_returns=[]
+        
+    @staticmethod
+    def normalize(vec):
+        """returns normalized version of vec
+        :vec: vector of numbers
+        """
+        #calculate vec sum
+        vec_sum=0
+        for elem in vec:
+            vec_sum+=elem
     
-    gains_vec = normalize(gains_vec)
+        #calculate probabilities
+        probabilities_list = []
+        for elem in vec:
+            probabilities_list.append(elem/vec_sum)
     
-    return gains_vec
-
-
-#Exponential update rule for multiplicative weigths method
-def multiplicative_weigths_exp_update(update_returns, eta, gains_vec, specialists_num):
-    for specialist in range(specialists_num):
-        gains_vec[specialist] = gains_vec[specialist] * np.exp(eta * (update_returns[specialist]-1))
+        return probabilities_list
+        
     
-    gains_vec = normalize(gains_vec)
-
-    return gains_vec
-
-#Implements the adaptive regret rule for both static and dynamic beta values
-def adaptive_regret_update(update_returns, eta, gains_vec, specialists_num, beta):
-    gains_vec = multiplicative_weigths_exp_update(update_returns, eta, gains_vec, specialists_num)
-
-    myBeta=beta
-    #if(isinstance(beta, (list, np.ndarray))):
-    #    myBeta=beta[index]
     
-    for specialist in range(specialists_num):
-        gains_vec[specialist] =(myBeta/specialists_num)+((1-myBeta)*gains_vec[specialist])
-    
-    gains_vec = normalize(gains_vec)
-
-    return gains_vec
-
-#Runs the multiplicative weigths algorithm
-#Parameters:
-#'raw_data': dataframe with each column representing a specialist, except for the first one that is the date
-#'eta': learning rate parameter
-#'period': business days between each rebalance
-#'update_data': dataframe with the same shape as raw_data, used only to calculate the gains (useful for risk sensitive)
-#'beta': fixed share parameter. if none is given, the original version of the algorithm is used
-def multiplicative_weights (raw_data, eta, period, update_data, beta=None):
-    #assertive: if the mode is adaptive regret and there is no beta defined, then a warning is raised
-    #if(mode==3 and beta==None):
-    #     raise ValueError("No beta defined for adaptive regret")
-
-    #assertive: if mode is adaptive regret and beta is an array, it must be the same size as data rows
-    #if(mode==3 and isinstance(beta, (list, np.ndarray)) and not beta.__len__() == raw_data.__len__()):
-    #    raise ValueError("List of betas is not the same size as data points")
-
-    data=raw_data.copy()
-
-    #gets the number of specialists and set the initial gains vector
-    specialists_num=len(data.columns)-1
-    gains_vec= [1/specialists_num] * specialists_num
-
-    #Creates results columns
-    data['result'] = [0.0] * len(data)
-
-    periodOffset=period
-    
-    update_returns= [1] * specialists_num
-    
-    for index, row in data.iterrows():
-        #calculate the return of balanced portfolio
-        balanced_return=0.0
+    def multiplicative_weigths_linear_update(self, update_returns, gains_vec, specialists_num):     
+        """Linear update rule for multiplicative weigths method
+        not in use"""
         for specialist in range(specialists_num):
-            balanced_return = balanced_return + (gains_vec[specialist]*data.get_value(index,data.columns[specialist+1]))
-
-        data.set_value(index, 'result', balanced_return)
+            gains_vec[specialist] = gains_vec[specialist] * ((1 + self.eta) * update_returns[specialist]-1)
+        
+        gains_vec = self.normalize(gains_vec)
+        
+        return gains_vec
+    
+    
+    def multiplicative_weigths_exp_update(self, update_returns, gains_vec, specialists_num):
+        """Exponential update rule for multiplicative weigths method
+        """
+        for specialist in range(specialists_num):
+            gains_vec[specialist] = gains_vec[specialist] * np.exp(self.eta * (update_returns[specialist]-1))
+        
+        gains_vec = self.normalize(gains_vec)
+    
+        return gains_vec
+    
+    def adaptive_regret_update(self, update_returns, gains_vec, specialists_num):
+        """Implements the adaptive regret rule for both static and dynamic beta values
+        """
+        gains_vec = self.multiplicative_weigths_exp_update(update_returns, gains_vec, specialists_num)
+    
+        myBeta=self.beta
+        #if(isinstance(beta, (list, np.ndarray))):
+        #    myBeta=beta[index]
         
         for specialist in range(specialists_num):
-            update_returns[specialist] = update_returns[specialist] * (1+update_data.get_value(index, update_data.columns[specialist+1]))
+            gains_vec[specialist] =(myBeta/specialists_num)+((1-myBeta)*gains_vec[specialist])
+        
+        gains_vec = self.normalize(gains_vec)
+    
+        return gains_vec
+    
+    def before_backtest(self, data):
+        specialists_num=len(data.columns)-1
+        self.update_returns=[1] * specialists_num 
+        self.update_data=data
+    
+    def update_weights(self,current_index, current_weights, data):        #assertive: if the mode is adaptive regret and there is no beta defined, then a warning is raised
+        specialists_num=len(data.columns)-1
+        
+        for specialist in range(specialists_num):
+            self.update_returns[specialist] = self.update_returns[specialist] * (1+self.update_data.get_value(current_index, self.update_data.columns[specialist+1]))
      
         #if period has passed, update gains vector
-        if(periodOffset>=period):
-            if(beta is None):
-                gains_vec = multiplicative_weigths_exp_update(update_returns, eta, gains_vec, specialists_num)
+        if(self.periodOffset>=self.period):
+            if(self.beta is None):
+                weights_vec = self.multiplicative_weigths_exp_update(self.update_returns, current_weights , specialists_num)
             else:
-                gains_vec = adaptive_regret_update(update_returns, eta, gains_vec, specialists_num, beta)
+                weights_vec = self.adaptive_regret_update(self.update_returns, current_weights, specialists_num)
             #reset returns for the next period
-            update_returns= [1] * specialists_num
-            periodOffset=0
+            self.update_returns= [1] * specialists_num
+            self.periodOffset=0
+        else:
+            weights_vec=current_weights
             
-        periodOffset=periodOffset+1     
-      
-    return data
-
-
-
-def run (data, eta, period, beta=None):
-    return multiplicative_weights(data, eta, period, data, beta)
+        self.periodOffset=self.periodOffset+1     
+          
+        return weights_vec

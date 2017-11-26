@@ -4,7 +4,7 @@ Created on Nov 6, 2017
 @author: ckubudi
 '''
 import unittest
-import multiplicative_weigths as mw 
+from multiplicative_weigths import Multiplicative_Weights
 import pandas as pd
 from datetime import datetime
 
@@ -13,14 +13,14 @@ class Test(unittest.TestCase):
     #Test normalize function
     def test_normalize(self):
         vec1 = [2.0, 3.0, 5.0]
-        vec1 = mw.normalize(vec1)
+        vec1 = Multiplicative_Weights.normalize(vec1)
         exp_vec1 = [0.2,0.3,0.5]
         
         for i in range(0,len(vec1)):
             self.assertAlmostEqual(exp_vec1[i], vec1[i], 2, "normalization not working")
         
         vec2 = [0.02,0.03,0.05]
-        vec2 = mw.normalize(vec2)
+        vec2 = Multiplicative_Weights.normalize(vec2)
         exp_vec2 = [0.2,0.3,0.5]
         
         for i in range(0,len(vec2)):
@@ -36,7 +36,9 @@ class Test(unittest.TestCase):
         returns_df.columns = ['date',"asset1","asset2"]
         
         eta=1.0
-        result_df = mw.multiplicative_weights(returns_df, eta, 1, returns_df)
+        period=1
+        algorithm =Multiplicative_Weights(eta, period)
+        result_df = algorithm.run(returns_df)
         
         weight = [1.0/2] * 2
         expected_returns = [0] * len(returns_df)
@@ -45,13 +47,13 @@ class Test(unittest.TestCase):
         self.assertAlmostEqual(expected_returns[0], result_df['result'][0], 2, "first return is wrong")
         
         #the update vec should be the returns + 1
-        weight = mw.multiplicative_weigths_exp_update([2.0, 1.5], eta, weight, 2)
+        weight = algorithm.multiplicative_weigths_exp_update([2.0, 1.5], weight, 2)
         expected_returns[1] = (weight[0] * returns_df.loc[1,'asset1']) + (weight[1] * returns_df.loc[1,'asset2'])
         
         self.assertAlmostEqual(expected_returns[1], result_df['result'][1], 2, "second return is wrong")
         
         #the update vec should be the returns + 1
-        weight = mw.multiplicative_weigths_exp_update([3.0, 2.0], eta, weight, 2)
+        weight = algorithm.multiplicative_weigths_exp_update([3.0, 2.0], weight, 2)
         expected_returns[2] = (weight[0] * returns_df.loc[2,'asset1']) + (weight[1] * returns_df.loc[2,'asset2'])
         
         self.assertAlmostEqual(expected_returns[2], result_df['result'][2], 2, "third return is wrong")
@@ -65,7 +67,9 @@ class Test(unittest.TestCase):
         returns_df.columns = ['date',"asset1","asset2"]
         
         eta=-0.5
-        result_df = mw.multiplicative_weights(returns_df, eta, 1, returns_df)
+        period=1
+        algorithm =Multiplicative_Weights(eta, period)
+        result_df = algorithm.run(returns_df)
         
         res_return=result_df['result']
         delta_1 = res_return[1] - res_return[0]
@@ -84,9 +88,14 @@ class Test(unittest.TestCase):
         
         eta_1 = 0.75
         eta_2 = 1.75
+        period=1
+        algorithm1=Multiplicative_Weights(eta_1, period)
+        algorithm2=Multiplicative_Weights(eta_2, period)
+ 
         
-        result_df_1 = mw.multiplicative_weights(returns_df, eta_1, 1, returns_df)
-        result_df_2 = mw.multiplicative_weights(returns_df, eta_2, 1, returns_df)
+        
+        result_df_1 = algorithm1.run(returns_df)
+        result_df_2 = algorithm2.run(returns_df)
 
         res_return_1 = result_df_1['result']
         res_return_2 = result_df_2['result']
