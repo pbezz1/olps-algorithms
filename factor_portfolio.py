@@ -8,7 +8,6 @@ import numpy as np
 import load_factors as lf
 import datetime
 from algorithm import Algorithm
-from __builtin__ import list
 
 
 class Factor_Portfolio(Algorithm):
@@ -39,16 +38,18 @@ class Factor_Portfolio(Algorithm):
         data = data.reset_index(drop=True)
         #first row is time to rebalance
         self.next_rebalance_date=data['date'][self.factor_index]
+        
+        return data
     
     
     def update_weights(self, current_index, current_weights, data):
-        current_date=data['date'][len(data-1)]
+        current_date=data['date'][len(data)-1]
         
         if(current_date >= self.next_rebalance_date):    
             while((self.factor_index+1 < len(self.factor_df)) 
                   and (self.next_rebalance_date > self.factor_df['date'][self.factor_index+1])):
                 factor_index=self.factor_index+1
-            factors=self.factor_df.loc[factor_index,self.factor_df.columns[1:len(self.factor_df.columns)]]   
+            factors=self.factor_df.loc[self.factor_index,self.factor_df.columns[1:len(self.factor_df.columns)]]   
             factors=pd.Series.sort_values(factors,ascending=False) 
             #build portfolio
             self.portfolio=[]
@@ -57,7 +58,7 @@ class Factor_Portfolio(Algorithm):
                     self.portfolio.append(factors.index[i])
             
             self.rebalance_dates.append(current_date)
-            self.factor_used_dates.append(self.factor_df.loc[factor_index,'date'])
+            self.factor_used_dates.append(self.factor_df.loc[self.factor_index,'date'])
             self.portfolio_lists.append(self.portfolio)
             
             self.next_rebalance_date=self.next_rebalance_date+datetime.timedelta(days=self.rebalance_window)
@@ -65,7 +66,7 @@ class Factor_Portfolio(Algorithm):
             weights=[]
             if self.portfolio:
                 weight=1.0/len(self.portfolio)
-                for asset_name in data.columns[1:len(data)]:
+                for asset_name in data.columns[1:len(data.columns)]:
                     if asset_name in self.portfolio:
                         weights.append(weight)
                     else:

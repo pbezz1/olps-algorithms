@@ -11,7 +11,6 @@ import numpy as np
 from datetime import datetime
 
 class TestLoadFactors(unittest.TestCase):
-
     def test_load_assets(self):
         actual_assets = lf.load_assets(['test_factor1'], '../../test_data/')
         

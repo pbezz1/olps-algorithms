@@ -5,18 +5,26 @@ Created on Nov 3, 2017
 '''
 import unittest
 import load_factors as lf
-import factor_portfolio as fp
+from factor_portfolio import Factor_Portfolio
 import tools
+import pickle
 
 class Test(unittest.TestCase):
 
-
-    def test_factor_portfolios(self):
+    def pre_process_algorithm(self):
         factors = ['price_to_book']
-        assets_list=lf.load_assets(factors, '..\\data\\')
-        factor_df=lf.create_factor_df(assets_list,'price_to_book',True)
+        assets_list=lf.load_assets(factors, '..\\..\\data\\')
         returns_df=lf.create_factor_df(assets_list,'return',False)
-        (data,data_portfolios)=fp.create_factor_portfolio(factor_df, returns_df, 10, 1)
+        
+        rebalance_window=60
+        algorithm = Factor_Portfolio(assets_list, 'price_to_book', 10, rebalance_window)
+        pickle.dump(algorithm, open('dump/price_to_book_algorithm.p', 'wb'))
+        pickle.dump(returns_df, open('dump/returns.p', 'wb'))
+
+    def test_factor_portfolios(self):  
+        algorithm = pickle.load(open('dump/price_to_book_algorithm.p', 'rb'))
+        returns_df = pickle.load(open('dump/returns.p', 'wb'))
+        data = algorithm.run(returns_df)
         
         print('end')
         
