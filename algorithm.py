@@ -17,13 +17,18 @@ class Algorithm(object):
         """to do before backtest
         :data: dataframe with returns and dates
         """
-        pass 
+        return data 
     
     
     def update_weights(self, current_index, current_weights, data):
         """ Update the weights
         """
         return current_weights
+    
+    def after_backtest(self):
+        """to do after backtest
+        """
+        pass
     
     @staticmethod
     def getUCRP_weights(specialists_num):
@@ -42,7 +47,7 @@ class Algorithm(object):
         specialists_num=len(data.columns)-1
         weights_vec=self.getUCRP_weights(specialists_num)
         
-        self.before_backtest(data)
+        data = self.before_backtest(data)
         
         for index, row in data.iterrows():
             balanced_return=0.0
@@ -54,5 +59,7 @@ class Algorithm(object):
             result.set_value(index, 'result', balanced_return)
                             
             weights_vec = self.update_weights(index, weights_vec, data.iloc[0:index+1,:])
+            
+        self.after_backtest()
     
         return result

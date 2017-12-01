@@ -39,3 +39,5 @@ class Risk_Sensitive_MWU(Multiplicative_Weights):
         """
         #update_data: dataframe with the same shape as raw_data, used only to calculate the gains
         self.update_data=self.risk_sensitive(data)
+        
+        return data

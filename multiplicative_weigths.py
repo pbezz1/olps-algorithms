@@ -34,8 +34,6 @@ class Multiplicative_Weights(Algorithm):
             probabilities_list.append(elem/vec_sum)
     
         return probabilities_list
-        
-    
     
     def multiplicative_weigths_linear_update(self, update_returns, gains_vec, specialists_num):     
         """Linear update rule for multiplicative weigths method
@@ -78,6 +76,7 @@ class Multiplicative_Weights(Algorithm):
         specialists_num=len(data.columns)-1
         self.update_returns=[1] * specialists_num 
         self.update_data=data
+        return data
     
     def update_weights(self,current_index, current_weights, data):        #assertive: if the mode is adaptive regret and there is no beta defined, then a warning is raised
         specialists_num=len(data.columns)-1
