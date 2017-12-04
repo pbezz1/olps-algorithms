@@ -91,8 +91,7 @@ class Test(unittest.TestCase):
         period=1
         algorithm1=Multiplicative_Weights(eta_1, period)
         algorithm2=Multiplicative_Weights(eta_2, period)
- 
-        
+
         
         result_df_1 = algorithm1.run(returns_df)
         result_df_2 = algorithm2.run(returns_df)

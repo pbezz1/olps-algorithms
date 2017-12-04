@@ -73,8 +73,8 @@ class Multiplicative_Weights(Algorithm):
         return gains_vec
     
     def before_backtest(self, data):
-        specialists_num=len(data.columns)-1
-        self.update_returns=[1] * specialists_num 
+        super(Multiplicative_Weights,self).before_backtest(data)
+        self.update_returns=[1] * self.specialists_num
         self.update_data=data
         return data
     

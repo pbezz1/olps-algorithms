@@ -5,16 +5,16 @@ import datetime
 from asset import Asset
 
 #add factor to asset
-def add_factor(asset, file_path, factor_name):
+def add_factor(asset, file_path, factor_name, date_format):
     if (os.stat(file_path).st_size != 0):
         data = pd.DataFrame.from_csv(file_path,index_col=None,header='infer')
         data.columns = ['date',factor_name]
-        data['date']=pd.to_datetime(data['date'], format='%Y-%m-%d').dt.date
+        data['date']=pd.to_datetime(data['date'], format=date_format).dt.date
         asset.add_factor(factor_name, data)
 
 #loads all factors files for all files that have returns
 #factors - list of string
-def load_assets (factors, data_path):
+def load_assets (factors, data_path, date_format='%Y-%m-%d'):
     assets_dict={}
     asset = None
     #load returns
@@ -25,7 +25,7 @@ def load_assets (factors, data_path):
             if((os.stat(file_path).st_size != 0)):
                 asset=Asset(file_name)
                 assets_dict[file_name]=asset
-                add_factor(asset, file_path, 'return')
+                add_factor(asset, file_path, 'return', date_format)
     
     #load factors from factors list
     for factor_name in factors:
@@ -35,7 +35,7 @@ def load_assets (factors, data_path):
                 file_name=os.path.splitext(file)[0]
                 if(file_name in assets_dict):
                     asset=assets_dict[file_name]
-                    add_factor(asset, file_path, factor_name)
+                    add_factor(asset, file_path, factor_name, date_format)
                     
     return list(assets_dict.values())
 
