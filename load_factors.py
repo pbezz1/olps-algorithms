@@ -51,11 +51,11 @@ def create_extra_factor(assets_list, numer_factor, denom_factor, extra_factor_na
     for asset in assets_list:
         numer_factor_series = asset.get_factor(numer_factor)
         denom_factor_series = asset.get_factor(denom_factor)
-        merge = numer_factor_series.join(denom_factor_series, how='inner')
-        merge[extra_factor_name]=merge[numer_factor]/merge[denom_factor]
-        del merge[numer_factor]
-        del merge[denom_factor]
-        asset.add_factor(extra_factor_name,merge)
+        join = numer_factor_series.join(denom_factor_series, how='inner')
+        join[extra_factor_name]=join[numer_factor]/join[denom_factor]
+        del join[numer_factor]
+        del join[denom_factor]
+        asset.add_factor(extra_factor_name,join)
 
 def create_momentum_factor(assets_list, short_window, long_window, factor_name):
     """ Creates momentum factor
@@ -136,3 +136,33 @@ def _convert_prices(S, replace_missing=True):
     if(len(X.columns)==1):    
         X.columns=['return']
     return X
+
+def custom_key(asset):
+    return asset.name
+
+def print_list(assets_list):
+    for asset in assets_list:
+        print(asset.name)
+
+def is_same_company(asset1,asset2):
+    """Compare two asset names and returns True in case they are the same company
+    """
+    asset1_alias=asset1[0:len(asset1)-1]
+    asset2_alias=asset2[0:len(asset2)-1]
+    if asset1_alias == asset2_alias :
+        return True
+    else:
+        return False
+        
+def get_only_PN(assets_list):
+    if not assets_list:
+        return []
+    assets_list.sort(key=custom_key,reverse=True)
+    new_list=[]
+    new_list.append(assets_list[0])
+    for idx in range(1,len(assets_list)):
+        asset1 = assets_list[idx-1]
+        asset2 = assets_list[idx]
+        if not is_same_company(asset1.name, asset2.name):
+            new_list.append(asset2)
+    return new_list

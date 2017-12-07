@@ -12,6 +12,12 @@ import os
 
 class Test(unittest.TestCase):
 
+    def load_assets(self):
+        assets_list=lf.load_assets([], '../../data/')
+        lf.create_momentum_factor(assets_list, 21, 252, 'momentum')
+        pickle.dump(assets_list, open('../../dump/assets_list.p', 'wb'))
+
+
     def pre_process_algorithm(self):
         factors = ['price_to_book']
         assets_list=lf.load_assets(factors, '../../data/')
