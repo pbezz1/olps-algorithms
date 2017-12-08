@@ -5,7 +5,7 @@ from algorithm import Algorithm
 
 class Multiplicative_Weights(Algorithm):
     
-    def __init__(self, eta, period, beta=None):
+    def __init__(self, eta, beta=None):
         """Runs the multiplicative weigths algorithm
         :eta: learning rate parameter
         :period: business days between each rebalance
@@ -13,10 +13,7 @@ class Multiplicative_Weights(Algorithm):
         """
         super(Multiplicative_Weights, self).__init__()
         self.eta=eta
-        self.period=period
         self.beta=beta
-        self.periodOffset=period
-        self.update_returns=[]
         
     @staticmethod
     def normalize(vec):
@@ -35,11 +32,15 @@ class Multiplicative_Weights(Algorithm):
     
         return probabilities_list
     
+    @property
+    def name(self):
+        return 'MWU'+str(self.eta)
+    
     def multiplicative_weigths_linear_update(self, update_returns, gains_vec, specialists_num):     
         """Linear update rule for multiplicative weigths method
         not in use"""
         for specialist in range(specialists_num):
-            gains_vec[specialist] = gains_vec[specialist] * ((1 + self.eta) * update_returns[specialist]-1)
+            gains_vec[specialist] = gains_vec[specialist] * ((1 + self.eta) * (update_returns[specialist]-1))
         
         gains_vec = self.normalize(gains_vec)
         
@@ -73,29 +74,23 @@ class Multiplicative_Weights(Algorithm):
         return gains_vec
     
     def before_backtest(self, data):
-        super(Multiplicative_Weights,self).before_backtest(data)
-        self.update_returns=[1] * self.specialists_num
+        data = super(Multiplicative_Weights,self).before_backtest(data)
         self.update_data=data
+        self._last_index=None
         return data
     
     def update_weights(self,current_index, current_weights, data):        #assertive: if the mode is adaptive regret and there is no beta defined, then a warning is raised
-        specialists_num=len(data.columns)-1
-        
-        for specialist in range(specialists_num):
-            self.update_returns[specialist] = self.update_returns[specialist] * (1+self.update_data.get_value(current_index, self.update_data.columns[specialist+1]))
      
-        #if period has passed, update gains vector
-        if(self.periodOffset>=self.period):
-            if(self.beta is None):
-                weights_vec = self.multiplicative_weigths_exp_update(self.update_returns, current_weights , specialists_num)
-            else:
-                weights_vec = self.adaptive_regret_update(self.update_returns, current_weights, specialists_num)
-            #reset returns for the next period
-            self.update_returns= [1] * specialists_num
-            self.periodOffset=0
+        if(self._last_index is None):
+            weights_vec = Algorithm.getUCRP_weights(self.specialists_num)
         else:
-            weights_vec=current_weights
-            
-        self.periodOffset=self.periodOffset+1     
-          
+            current_result=data[(data.index >= self._last_index) & (data.index < current_index)]
+            update_returns=np.prod(current_result+1, axis=0)
+            if(self.beta is None):
+                weights_vec = self.multiplicative_weigths_exp_update(update_returns, current_weights , self.specialists_num)
+            else:
+                weights_vec = self.adaptive_regret_update(update_returns, current_weights, self.specialists_num)
+                            
+        self._last_index=current_index  
+                
         return weights_vec

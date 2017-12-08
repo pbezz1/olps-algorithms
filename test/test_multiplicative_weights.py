@@ -30,19 +30,22 @@ class Test(unittest.TestCase):
 
     #Testing if the returns are exactly as expected
     def test_returns(self):
-        returns_df = pd.DataFrame([(datetime.strptime('2017-10-01', "%Y-%m-%d").date(), 1.0 , 0.5), 
-                                          (datetime.strptime('2017-10-02', "%Y-%m-%d").date(), 2.0 , 1.0),
-                                          (datetime.strptime('2017-10-03', "%Y-%m-%d").date(), -0.5 , -1.0)])
-        returns_df.columns = ['date',"asset1","asset2"]
+        index=[datetime.strptime('2017-10-01', "%Y-%m-%d"),datetime.strptime('2017-10-02', "%Y-%m-%d"),datetime.strptime('2017-10-03', "%Y-%m-%d")]
+        returns_df = pd.DataFrame([(1.0 , 0.5), 
+                                          ( 2.0 , 1.0),
+                                          ( -0.5 , -1.0)]
+        ,index=index
+        ,columns=["asset1","asset2"])
+        returns_df.index.name='date'
         
         eta=1.0
-        period=1
-        algorithm =Multiplicative_Weights(eta, period)
-        result_df = algorithm.run(returns_df)
+        algorithm =Multiplicative_Weights(eta)
+        algorithm.rebalance_window=1
+        result_df = algorithm.run(returns_df).data
         
         weight = [1.0/2] * 2
         expected_returns = [0] * len(returns_df)
-        expected_returns[0] = (weight[0] * returns_df.loc[0,'asset1']) + (weight[1] * returns_df.loc[0,'asset2'])
+        expected_returns[0] = (weight[0] * returns_df.loc[index[0],'asset1']) + (weight[1] * returns_df.loc[index[0],'asset2'])
         
         self.assertAlmostEqual(expected_returns[0], result_df['result'][0], 2, "first return is wrong")
         

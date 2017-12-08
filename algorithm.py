@@ -28,7 +28,7 @@ class Algorithm(object):
         #gets the number of specialists and set the initial gains vector
         self.weights_vec=self.getUCRP_weights(self.specialists_num)
         
-        return data[data.index > self.start_date] 
+        return data[data.index >= self.start_date] 
     
     
     def update_weights(self, current_index, current_weights, data):
@@ -82,8 +82,10 @@ class Algorithm(object):
         """Runs the algorithm
         :data: dataframe with each column representing a specialist, except for the first one that is the date        
         """
-        self.start_date= datetime.datetime.strptime(start_date, "%m/%d/%Y")
-        
+        if(start_date is not None):
+            self.start_date= datetime.datetime.strptime(start_date, "%m/%d/%Y")
+        else:
+            self.start_date=data.index[0]
         #gets the number of specialists and set the initial gains vector
         self.specialists_num=len(data.columns)
 
@@ -93,10 +95,10 @@ class Algorithm(object):
         rebalance_date = data.index[0]
         cum_ret=1.0
         
-        #create result dataframe
+        #create result_df dataframe
         columns = ['weights','result']
         temp = [([],0.0)] * len(data)  
-        result = pd.DataFrame(temp, columns=columns, index=data.index)
+        self._result = pd.DataFrame(temp, columns=columns, index=data.index)
         
         for index, row in data.iterrows():
             if(index >= rebalance_date):
@@ -109,9 +111,9 @@ class Algorithm(object):
                 ret=(temp-cum_ret)
                 cum_ret=temp
             
-            result.set_value(index, 'weights', self.weights_vec)
-            result.set_value(index, 'result', ret)
+            self._result.set_value(index, 'weights', self.weights_vec)
+            self._result.set_value(index, 'result', ret)
                                 
         self.after_backtest()
     
-        return AlgorithmResult(result, self.name)
+        return AlgorithmResult(self._result, self.name)

@@ -4,6 +4,7 @@ Created on Dec 4, 2017
 @author: ckubudi
 '''
 import pandas as pd
+import numpy as np
 import os
 
 
@@ -39,6 +40,10 @@ class AlgorithmResult():
         return roa/(len(self.data)/252.)
     
     @property
+    def total_equity(self):
+        return np.sum(self.data['result'])
+    
+    @property
     def equity(self):
         return self.data['result'].cumsum()
     
@@ -59,9 +64,9 @@ class AlgorithmResult():
 
     @property
     def max_drawdown(self):
-        ''' Returns highest drawdown in percentage. '''
+        ''' Returns highest drawdown'''
         x = self.equity
-        return max(1. - x / x.cummax())
+        return max(x.cummax()-x)
     
     @property
     def winning_pct(self):
@@ -75,8 +80,13 @@ class AlgorithmResult():
         return """Summary:
         Yrly ROA: {:.2f}
         Longest drawdown: {:.0f} days
-        Max drawdown: {:.2f}%
-        Winning days: {:.1f}%""".format(self.yrly_roa,self.drawdown_period,100 * self.max_drawdown,100 * self.winning_pct)
+        Total Return: {:.2f}%
+        Max drawdown: {:.2f}
+        Winning days: {:.1f}%
+        Start Date: {:%m/%Y}
+        End Date: {:%m/%Y}
+        """.format(self.yrly_roa,self.drawdown_period,100 * self.total_equity,self.max_drawdown,100 * self.winning_pct, 
+                   self.data.index[0], self.data.index[len(self.data)-1])
         
     def plot(self, **kwargs):
         columns=self.data.columns[1:len(self.data.columns)]
