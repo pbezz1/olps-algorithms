@@ -19,7 +19,7 @@ class Algorithm(object):
         self._rebalance_window=1
         self._rebalance_period='daily'
         self._filter=None
-        pass
+        self.cost=0.0
     
     def before_backtest(self, data):
         """to do before backtest
@@ -27,6 +27,7 @@ class Algorithm(object):
         """
         #gets the number of specialists and set the initial gains vector
         self.weights_vec=self.getUCRP_weights(self.specialists_num)
+        self._last_weights=[.0]*self.specialists_num
         
         return data[data.index >= self.start_date] 
     
@@ -93,7 +94,6 @@ class Algorithm(object):
         
         #always rebalance on first date
         rebalance_date = data.index[0]
-        cum_ret=1.0
         
         #create result_df dataframe
         columns = ['weights','result']
@@ -104,12 +104,12 @@ class Algorithm(object):
             if(index >= rebalance_date):
                 self.weights_vec = self.update_weights(index,self.weights_vec, data.loc[:index,:])
                 rebalance_date=self.getNextRebalanceDate(rebalance_date)
-                ret=np.dot(self.weights_vec, row)
-                cum_ret=1.0+ret
+                turnover = np.sum(np.abs(np.subtract(self.weights_vec, self._last_weights)))
+                self._last_weights=self.weights_vec
             else:
-                temp=(1+np.dot(self.weights_vec, row))*cum_ret
-                ret=(temp-cum_ret)
-                cum_ret=temp
+                turnover=0.0
+            
+            ret=np.dot(self.weights_vec, row)-(turnover*self.cost)
             
             self._result.set_value(index, 'weights', self.weights_vec)
             self._result.set_value(index, 'result', ret)

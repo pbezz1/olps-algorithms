@@ -26,11 +26,11 @@ class Pattern_Matching(Algorithm):
         :c_threshold: minimum correlation to recognize similar patterns
         """
         
-        historical_list = historical_df.iloc[:,historical_df.columns != 'date'].values.flatten()
+        historical_list = historical_df.values.flatten()
         current_window=np.asarray(current_window)
         similar_next_steps = []
     
-        experts_num = len(historical_df.columns)-1    
+        experts_num = len(historical_df.columns)  
         values_window=experts_num*window_size
         it_window_start=0
         it_window_end=values_window
@@ -94,12 +94,12 @@ class Pattern_Matching(Algorithm):
     
     def update_weights(self, current_index, current_weights, data):
         data_len=len(data)
-        current_window = data.iloc[data_len-self.window_size:data_len,1:len(data.columns)].values.flatten()
+        current_window = data.iloc[data_len-self.window_size:data_len,:].values.flatten()
         
         next_steps = self.process_similar_windows(current_window, data, self.window_size, self.c_threshold)
         
         if not next_steps:
-            weights = self.getUCRP_weights(len(data.columns)-1)
+            weights = self.getUCRP_weights(self.specialists_num)
         else:    
             next_steps = pd.DataFrame(next_steps)
             weights = self.get_bcrp(next_steps)

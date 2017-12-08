@@ -15,6 +15,10 @@ class AlgorithmResult():
     
     def __init__(self, data, name):
         self.data=data
+        temp=data['result']+1
+        self.r_log=np.log(temp)
+        self.r_cum = temp.cumprod()
+        self.r_cum_log=np.log(self.r_cum)
         self.name=name
         self.benchmarks=[]
         self.calculate()
@@ -33,19 +37,20 @@ class AlgorithmResult():
             return
         benchmark_data.columns=[benchmark_name]
         self.data = self.data.join(benchmark_data, how='left')
-    
+        self.benchmarks.append(benchmark_name)
+        
     @property
     def yrly_roa(self):
-        roa = self.data['result'].sum() / self.max_drawdown
+        roa = self.r_cum_log[len(self.r_cum_log)-1] / self.max_drawdown
         return roa/(len(self.data)/252.)
     
     @property
     def total_equity(self):
-        return np.sum(self.data['result'])
+        return self.equity[len(self.data)-1]-1
     
     @property
     def equity(self):
-        return self.data['result'].cumsum()
+        return self.r_cum
     
     @property
     def drawdown_period(self):
@@ -65,7 +70,7 @@ class AlgorithmResult():
     @property
     def max_drawdown(self):
         ''' Returns highest drawdown'''
-        x = self.equity
+        x = self.r_cum_log
         return max(x.cummax()-x)
     
     @property
@@ -75,23 +80,52 @@ class AlgorithmResult():
         all_trades = (x != 0).sum()
         return float(win) / all_trades
     
+    @property
+    def annualized_return(self):
+        return np.exp(self.r_log.mean() * 252.) - 1
+
+    @property
+    def annualized_volatility(self):
+        return np.exp(self.r_log).std() * np.sqrt(252.)
+    
+    
+    @property
+    def sharpe(self):
+        """ Compute annualized sharpe ratio from log returns. 
+        """
+        freq = 252.
+        mu, sd = self.r_log.mean(), self.r_log.std()
+        mu = mu * freq
+        sd = sd * np.sqrt(freq)
+        
+        return mu/sd
+    
     
     def summary(self):
         return """Summary:
         Yrly ROA: {:.2f}
+        Yrly Sharpe Ratio: {:.2f}
+        Annualized return: {:.2f}%
+        Annualized volatility: {:.2f}%
         Longest drawdown: {:.0f} days
-        Total Return: {:.2f}%
-        Max drawdown: {:.2f}
+        Net Return: {:.2f}%
         Winning days: {:.1f}%
         Start Date: {:%m/%Y}
         End Date: {:%m/%Y}
-        """.format(self.yrly_roa,self.drawdown_period,100 * self.total_equity,self.max_drawdown,100 * self.winning_pct, 
-                   self.data.index[0], self.data.index[len(self.data)-1])
+        """.format(self.yrly_roa,self.sharpe,
+                   100*self.annualized_return,
+                   100*self.annualized_volatility,
+                   self.drawdown_period,
+                   100*self.total_equity,
+                   100*self.winning_pct, 
+                   self.data.index[0],
+                   self.data.index[len(self.data)-1])
         
     def plot(self, **kwargs):
-        columns=self.data.columns[1:len(self.data.columns)]
+        columns=self.benchmarks[:]
         df = self.data[columns]
-        for column in df.columns:
-            df[column]= df[column].cumsum()
-        df=df.rename(columns={'result' : self.name})
-        df.plot(legend=True, **kwargs)
+        for column in self.benchmarks:
+            df[column]=df[column]+1
+            df[column]= np.log(df[column].cumprod())
+        df[self.name]=self.r_cum_log
+        df.plot(legend=True,linewidth=0.8, **kwargs)

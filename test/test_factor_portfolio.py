@@ -31,18 +31,18 @@ class Test(unittest.TestCase):
             factor_df.index.name='date'
            
             algorithm = Factor_Portfolio(None, 'test', 2)
-            algorithm.rebalance_window=2
+            algorithm.rebalance_window=1
             algorithm.factor_df=factor_df
             
-            df = algorithm.run(return_df)
+            df = algorithm.run(return_df).data
             
             #self.assertEquals(df_portfolios['portfolio'][0],['ASSET1','ASSET2'],'portfolio not matching')
-            self.assertAlmostEqual(df['result'][0], 1.125, 3, 'portfolio return not matching')
+            self.assertAlmostEqual(df['result'][0], .125, 3, 'portfolio return not matching')
             #missing one asset portfolio
             #self.assertEquals(df_portfolios['portfolio'][1],['ASSET3'],'portfolio not matching') 
-            self.assertAlmostEqual(df['result'][1], 1.10, 3, 'portfolio return not matching')
+            self.assertAlmostEqual(df['result'][1], .10, 3, 'portfolio return not matching')
             
-            self.assertAlmostEqual(df['result'][2], 1.075, 3, 'portfolio return not matching')
+            self.assertAlmostEqual(df['result'][2], .075, 3, 'portfolio return not matching')
 
             
             

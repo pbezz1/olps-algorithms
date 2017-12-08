@@ -25,18 +25,14 @@ class Factor_Multi_Portfolio(Factor_Portfolio):
             raise ValueError("Facor Multi Portfolio strategy doesn't support daily updates")
         data=super(Factor_Multi_Portfolio, self).before_backtest(data)
         self._p=self.rebalance_window
-        self._queue=Queue(maxsize=self._p)
+        self._queue=Queue(maxsize=self._n_portfolios)
+        for idx in range(self._n_portfolios):
+            algorithm = Factor_Portfolio(self._assets_list, self._factor_name, self.portfolio_size)
+            
         self.rebalance_window=1
         self._periods=0
         self._first_operation_date=None
         return data
-    
-    @staticmethod
-    def average_portfolios(queue):
-        """Compose multiple portfolios on the queue and returns one vector of weights
-        :queue: queue of weights vectors
-        """
-        return np.mean(list(queue.queue),axis=0)
     
     def update_weights(self, current_index, current_weights, data):
         current_date=data.index[len(data)-1]

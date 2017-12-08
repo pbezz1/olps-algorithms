@@ -11,17 +11,19 @@ from pattern_matching import Pattern_Matching
 
 class Test(unittest.TestCase):
 
-
     def test_similar_window_simple(self):
         current_window=[0.1,0.2]
         window_size=1
         c_threshold=0.9
         
         #find equal window
-        returns_df = pd.DataFrame([(datetime.strptime('2017-10-01', "%Y-%m-%d").date(), 0.1 , 0.2), 
-                                           (datetime.strptime('2017-10-02', "%Y-%m-%d").date(), 1.0 , 1.0)])
-        returns_df.columns=['date','asset1','asset2']
-        
+        index = [datetime.strptime('2017-10-01', "%Y-%m-%d").date(), datetime.strptime('2017-10-02', "%Y-%m-%d").date()]
+        returns_df = pd.DataFrame([(0.1 , 0.2), 
+                                           ( 1.0 , 1.0)],
+                                           columns=['asset1','asset2'],
+                                           index=index)
+        returns_df.index.name = 'date'
+                                                   
         next_steps = Pattern_Matching.process_similar_windows(current_window, returns_df, window_size, c_threshold)
         
         next_step=next_steps[0]
@@ -30,8 +32,8 @@ class Test(unittest.TestCase):
             self.assertAlmostEquals(next_step[idx], expected_next_steps[idx],"algorithm didn't find similar window")
         
         #find equal but negative window
-        returns_df.loc[0,'asset1'] = -0.2
-        returns_df.loc[0,'asset2'] = -0.1
+        returns_df.loc[index[0],'asset1'] = -0.2
+        returns_df.loc[index[0],'asset2'] = -0.1
         
         next_steps = Pattern_Matching.process_similar_windows(current_window, returns_df, window_size, c_threshold)
         next_step=next_steps[0]
@@ -41,8 +43,8 @@ class Test(unittest.TestCase):
             self.assertAlmostEquals(next_step[idx], expected_next_steps[idx],"algorithm didn't find similar window")
         
         #find very similar window
-        returns_df.loc[0,'asset1'] = 0.55
-        returns_df.loc[0,'asset2'] = 1.0
+        returns_df.loc[index[0],'asset1'] = 0.55
+        returns_df.loc[index[0],'asset2'] = 1.0
         
         next_steps = Pattern_Matching.process_similar_windows(current_window, returns_df, window_size, c_threshold)
         next_step=next_steps[0]
@@ -52,9 +54,12 @@ class Test(unittest.TestCase):
             self.assertAlmostEquals(next_step[idx], expected_next_steps[idx],"algorithm didn't find similar window")
             
         #find nothing    
-        returns_df = pd.DataFrame([(datetime.strptime('2017-10-01', "%Y-%m-%d").date(),1.0 , 1.0), 
-                                           (datetime.strptime('2017-10-02', "%Y-%m-%d").date(), 0.1 , 0.2)])
-        returns_df.columns=['date','asset1','asset2']
+        index = [datetime.strptime('2017-10-01', "%Y-%m-%d").date(), datetime.strptime('2017-10-02', "%Y-%m-%d").date()]
+        returns_df = pd.DataFrame([(1.0 , 1.0), 
+                                           (0.1 , 0.2)],
+                                  index=index,
+                                  columns=['asset1','asset2'])
+        returns_df.index.name = 'date'
         
         next_step = Pattern_Matching.process_similar_windows(current_window, returns_df, window_size, c_threshold)
         
@@ -67,12 +72,16 @@ class Test(unittest.TestCase):
         c_threshold=0.9
         
         #find equal window
-        returns_df = pd.DataFrame([(datetime.strptime('2017-10-01', "%Y-%m-%d").date(), 0.4 , 0.8), 
-                                           (datetime.strptime('2017-10-02', "%Y-%m-%d").date(), 1.6 , 2.0), 
-                                           (datetime.strptime('2017-10-03', "%Y-%m-%d").date(), 1.0 , 1.0), 
-                                           (datetime.strptime('2017-10-04', "%Y-%m-%d").date(), 1.0 , 1.0)])
-        returns_df.columns=['date','asset1','asset2']
-        
+        index = [datetime.strptime('2017-10-01', "%Y-%m-%d").date(), datetime.strptime('2017-10-02', "%Y-%m-%d").date(),
+                 datetime.strptime('2017-10-03', "%Y-%m-%d").date(), datetime.strptime('2017-10-04', "%Y-%m-%d").date()]
+        returns_df = pd.DataFrame([(0.4 , 0.8), 
+                                           (1.6 , 2.0), 
+                                           (1.0 , 1.0), 
+                                           (1.0 , 1.0)],
+                                  columns=['asset1','asset2'],
+                                  index=index)        
+        returns_df.index.name = 'date'
+
         next_steps = Pattern_Matching.process_similar_windows(current_window, returns_df, window_size, c_threshold)
         next_step=next_steps[0]
 
@@ -93,11 +102,15 @@ class Test(unittest.TestCase):
          
     
     def test_run(self):
-        returns_df = pd.DataFrame([(datetime.strptime('2017-10-01', "%Y-%m-%d").date(), 0.4 , 0.8), 
-                                           (datetime.strptime('2017-10-02', "%Y-%m-%d").date(), 1.6 , 2.0), 
-                                           (datetime.strptime('2017-10-03', "%Y-%m-%d").date(), 1.0 , 1.0), 
-                                           (datetime.strptime('2017-10-04', "%Y-%m-%d").date(), 1.0 , 1.0)])
-        returns_df.columns=['date','asset1','asset2']
+        index = [datetime.strptime('2017-10-01', "%Y-%m-%d").date(), datetime.strptime('2017-10-02', "%Y-%m-%d").date(),
+        datetime.strptime('2017-10-03', "%Y-%m-%d").date(), datetime.strptime('2017-10-04', "%Y-%m-%d").date()]
+        returns_df = pd.DataFrame([(0.4 , 0.8), 
+                                           (1.6 , 2.0), 
+                                           (1.0 , 1.0), 
+                                           (1.0 , 1.0)],
+                                  columns=['asset1','asset2'],
+                                  index=index)        
+        returns_df.index.name = 'date'
         
         algorithm =Pattern_Matching(1,0.9)
         result=algorithm.run(returns_df)

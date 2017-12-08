@@ -9,6 +9,7 @@ import load_factors as lf
 import datetime
 from algorithm import Algorithm
 from filter import Filter
+from asn1crypto.core import InstanceOf
 
 class Factor_Portfolio(Algorithm):
     
@@ -19,10 +20,12 @@ class Factor_Portfolio(Algorithm):
         :portfolio_size: number of assets in the portfolio
         """
         super(Factor_Portfolio, self).__init__()
+        self._assets_list=assets_list
         if assets_list:
             self.factor_df = lf.create_factor_df(assets_list, factor_name, True)
         self.portfolio_size=portfolio_size
         self._factor_name=factor_name
+        self.reverse_order=False
     
     @property
     def name(self):
@@ -38,7 +41,15 @@ class Factor_Portfolio(Algorithm):
 
         
     def add_filter(self, value):
-        self._filter=Filter(file_path=value)
+        """Creates filter
+        :value: can be a Filter or a path to a file
+        """
+        if(isinstance(value, Filter)):
+            self._filter=value
+        elif(isinstance(value, str)):
+            self._filter=Filter(file_path=value)
+        else:
+            raise ValueError("Filter type is not supported")
     
     
     def isWhiteListed(self, asset, date):
@@ -65,7 +76,7 @@ class Factor_Portfolio(Algorithm):
 
         #sort assets by factor
         factors=self.factor_df.iloc[self.factor_idx,:]   
-        factors=pd.Series.sort_values(factors,ascending=False) 
+        factors=pd.Series.sort_values(factors,ascending=self.reverse_order) 
         
         #build portfolio
         self.portfolio=[]

@@ -6,6 +6,7 @@ Created on Oct 28, 2017
 
 import unittest
 import load_factors as lf
+import factors
 import pandas as pd
 import numpy as np
 from asset import Asset
@@ -29,7 +30,7 @@ class TestLoadFactors(unittest.TestCase):
         expected_return_df.index.name = 'date'
         
         actual_prices_df = actual_set.get('ASSET1').get_factor('close')
-        actual_return_df = lf._convert_prices(actual_prices_df)
+        actual_return_df = factors.prices_to_returns(actual_prices_df)
         
         self.assertTrue(len(actual_return_df)==3 , 'return not matching')
         for r in range(3):
@@ -88,7 +89,7 @@ class TestLoadFactors(unittest.TestCase):
         
     def test_create_momentum_factor(self):
         asset = Asset('Test')
-        prices = pd.DataFrame([10,10,10,10,np.NaN,10,10,5,5,5],columns=['close'])
+        prices = pd.DataFrame([10,10,10,10,10,10,10,5,5,5],columns=['close'])
         numdays=len(prices)
         base = datetime.datetime.today()
         base = base.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -104,7 +105,5 @@ class TestLoadFactors(unittest.TestCase):
         self.assertTrue(not factor_df.empty, "factor dont exist")
         self.assertAlmostEqual(factor_df[factor_name][0], 5./(sum([10,10,10,10,10,10,10,5,5,5])/10), 4, "factor not equal")        
 
-        
-        
 if __name__ == '__main__':
     unittest.main()

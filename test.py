@@ -20,47 +20,21 @@ returns=pickle.load(open('../dump/returns.p', 'rb'))
 assets_list=lf.get_only_PN(assets_list)
 
 start = time.time()
-algorithm = Multiplicative_Weights(eta=0.3)
-result = algorithm.run(returns,start_date='01/01/2006')
-end = time.time()
-print('MWU Elapsed time: ', (end-start), ' segundos')
-
-"""
-start = time.time()
 algorithm = Factor_Portfolio(assets_list, 'momentum', 15)
 algorithm.add_filter('../data/filter/IBX.csv')
-algorithm.portfolio_size=15
-algorithm.rebalance_window=1
-algorithm.rebalance_period='monthly'
-result = algorithm.run(returns,start_date='01/01/2006')
 end = time.time()
-print('Factor Portfolio Elapsed time: ', (end-start), ' segundos')
-"""
-"""
-start = time.time()
-algorithm = Factor_Multi_Portfolio(assets_list, 'momentum', 15, n_portfolios=12)
-algorithm.add_filter('../data/filter/IBX.csv')
-end = time.time()
-print('Factor Multi Portfolio creation time: ', (end-start), ' segundos')
+print('Factor Portfolio creation time: ', (end-start), ' segundos')
 
 start = time.time()
-algorithm.portfolio_size=15
+algorithm.portfolio_size=5 
 algorithm.rebalance_window=1
 algorithm.rebalance_period='monthly'
+algorithm.cost=.004
 result = algorithm.run(returns,start_date='01/01/2006')
+portfolios = algorithm.df_portfolios
 end = time.time()
-print('Factor Multi Portfolio 1 run time: ', (end-start), ' segundos')
+print('Factor Portfolio 1 run time: ', (end-start), ' segundos')
 print(result.summary())
-
-start = time.time()
-algorithm.portfolio_size=15
-algorithm.rebalance_window=6
-algorithm.rebalance_period='monthly'
-result = algorithm.run(returns,start_date='01/01/2006')
-end = time.time()
-print('Factor Multi Portfolio 6 run time: ', (end-start), ' segundos')
-print(result.summary())
-"""
 
 
 print('end')

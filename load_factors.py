@@ -120,23 +120,6 @@ def create_returns(data_path):
                 else:
                     print("Something is wrong with data")
                     
-                    
-def _convert_prices(S, replace_missing=True):
-    """ Convert prices to returns
-    """
-    # be careful about NaN values
-    X = S / S.shift(1).fillna(method='ffill')
-    for name, s in X.iteritems():
-        X[name].iloc[s.index.get_loc(s.first_valid_index()) - 1] = 1.
-
-    if replace_missing:
-        X = X.fillna(1.)
-    
-    X = X-1
-    if(len(X.columns)==1):    
-        X.columns=['return']
-    return X
-
 def custom_key(asset):
     return asset.name
 
