@@ -9,7 +9,6 @@ import load_factors as lf
 import datetime
 from algorithm import Algorithm
 from filter import Filter
-from asn1crypto.core import InstanceOf
 
 class Factor_Portfolio(Algorithm):
     

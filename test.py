@@ -11,7 +11,6 @@ from asset import Asset
 from factor_portfolio import Factor_Portfolio
 from factor_multi_portfolio import Factor_Multi_Portfolio
 from multiplicative_weigths import Multiplicative_Weights
-from Cython.Shadow import returns
 
 #load objects
 assets_list=pickle.load(open('../dump/assets_list.p','rb'))

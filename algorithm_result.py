@@ -129,3 +129,37 @@ class AlgorithmResult():
             df[column]= np.log(df[column].cumprod())
         df[self.name]=self.r_cum_log
         df.plot(legend=True,linewidth=0.8, **kwargs)
+        
+        
+class AlgorithmResultsList():
+    
+    def __init__(self, results = []):
+        self.results=results
+    
+    def append(self, item):
+        if not isinstance(item, AlgorithmResult):
+            raise TypeError('item is not an algorithm result')
+        self.results.append(item)
+        
+    def plot(self, **kwargs):
+        names=[]
+        df=None
+        for result in self.results:
+            names.append(result.name)
+            if(df is None):
+                df=pd.DataFrame(result.r_cum_log)
+            else:
+                df=df.join(result.r_cum_log, how='outer')
+        df.index=names
+        df.plot(legend=True,linewidth=0.8, **kwargs)
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
