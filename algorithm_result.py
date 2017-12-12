@@ -30,7 +30,7 @@ class AlgorithmResult():
         benchmark_name=os.path.basename(file_path)
         benchmark_name=os.path.splitext(benchmark_name)[0]
         if(benchmark_name in self.data.columns):
-            return
+            return benchmark_name
         benchmark_data=pd.DataFrame.from_csv(file_path)
         if(len(benchmark_data.columns) != 1):
             raise Exception('something is wrong with benchmark file')
@@ -38,6 +38,7 @@ class AlgorithmResult():
         benchmark_data.columns=[benchmark_name]
         self.data = self.data.join(benchmark_data, how='left')
         self.benchmarks.append(benchmark_name)
+        return benchmark_name
         
     @property
     def yrly_roa(self):
@@ -121,6 +122,16 @@ class AlgorithmResult():
                    self.data.index[0],
                    self.data.index[len(self.data)-1])
         
+    def get_hedged_result(self, file_path, proportion = 1.0):
+        """Returns the algorithm result for the hedged curve against the benchmark
+        :file_path path to benchmark file
+        """
+        b_name=self.add_benchmark(file_path)
+        new_data=self.data.copy(deep=True)
+        new_data['result']=new_data['result']-(new_data[b_name]*proportion)
+        return AlgorithmResult(new_data[['result']],self.name+" hedged")
+        
+        
     def plot(self, **kwargs):
         columns=self.benchmarks[:]
         df = self.data[columns]
@@ -128,30 +139,55 @@ class AlgorithmResult():
             df[column]=df[column]+1
             df[column]= np.log(df[column].cumprod())
         df[self.name]=self.r_cum_log
-        df.plot(legend=True,linewidth=0.8, **kwargs)
+        df.plot(legend=True,linewidth=0.5, **kwargs)
         
+    def plot_yrly_result(self, **kwargs):
+        df = self.data[['result']+self.benchmarks]
+        df=df+1
+        df = pd.groupby(df,by=[df.index.year]).prod()
+        df=df-1
+        df=df*100
+        df.rename(columns={'result':self.name},inplace=True)
+        df.plot.bar(legend=True, **kwargs)
         
 class AlgorithmResultsList():
-    
+
     def __init__(self, results = []):
-        self.results=results
+        self.data=None
+        for result in results:
+            self.update_data(result)
+
+    def update_data(self, result):
+        if(self.data is None):
+            self.data=pd.DataFrame(result.r_cum_log)
+        else:
+            self.data=self.data.join(pd.DataFrame(result.r_cum_log), how='outer')
+        self.data.rename(columns={'result':result.name}, inplace=True)
     
+    def add_benchmark(self,file_path):
+        """Adds benchmarks to algo result
+        :file_path path to csv with results from algorithm
+        """
+        benchmark_name=os.path.basename(file_path)
+        benchmark_name=os.path.splitext(benchmark_name)[0]
+        if(benchmark_name in self.data.columns):
+            return
+        benchmark_data=pd.DataFrame.from_csv(file_path)
+        if(len(benchmark_data.columns) != 1):
+            raise Exception('something is wrong with benchmark file')
+            return
+        benchmark_data.columns=[benchmark_name]
+        self.data = self.data.join(benchmark_data, how='left')
+        self.data[benchmark_name]=self.data[benchmark_name]+1
+        self.data[benchmark_name]=np.log(self.data[benchmark_name].cumprod())
+        
     def append(self, item):
         if not isinstance(item, AlgorithmResult):
             raise TypeError('item is not an algorithm result')
-        self.results.append(item)
+        self.update_data(item)
         
     def plot(self, **kwargs):
-        names=[]
-        df=None
-        for result in self.results:
-            names.append(result.name)
-            if(df is None):
-                df=pd.DataFrame(result.r_cum_log)
-            else:
-                df=df.join(result.r_cum_log, how='outer')
-        df.index=names
-        df.plot(legend=True,linewidth=0.8, **kwargs)
+        self.data.plot(legend=True,linewidth=0.5, **kwargs)
     
         
     

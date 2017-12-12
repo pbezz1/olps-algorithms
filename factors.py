@@ -45,12 +45,12 @@ def momentum(prices, short_window, long_window):
     factor.dropna(how='all',inplace=True)
     return factor
 
-def vol(prices, window):
+def vol(returns, window):
     """ Creates vol factor as measured by stdev of returns
     :prices dataframe with price
     :window volatility window size
     """
-    factor = prices.rolling(window=window).std()
+    factor = returns.rolling(window=window).std()
     factor.dropna(how='all', inplace=True)
     return factor
     

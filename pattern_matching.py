@@ -16,7 +16,11 @@ class Pattern_Matching(Algorithm):
         super(Pattern_Matching, self).__init__()
         self.window_size=window_size
         self.c_threshold=c_threshold
-
+        
+    @property
+    def name(self):
+        return "Pattern Matching {:.0f}/{:.2f}".format(self.window_size,self.c_threshold)
+    
     @staticmethod
     def process_similar_windows(current_window, historical_df, window_size, c_threshold):
         """ Searches given historical dataframe for similar price windows and returns the next step for each of them
