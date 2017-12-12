@@ -63,15 +63,11 @@ class Pattern_Matching(Algorithm):
         :freq: frequency for sharpe (default 252 for daily data)
         :no_cash: if True, we can't keep cash (that is sum of weights == max_leverage)
         """
-        assert metric in ('return', 'sharpe', 'drawdown')
     
         x_0 = max_leverage * np.ones(X.shape[1]) / float(X.shape[1])
-        objective = lambda b: -np.sum(np.log(np.maximum(np.dot(X - 1, b) + 1, 0.0001)))
+        objective = lambda b: -np.sum(np.log(np.maximum(np.dot(X , b) , 0.0001)))
         
-        if no_cash:
-            cons = ({'type': 'eq', 'fun': lambda b: max_leverage - sum(b)},)
-        else:
-            cons = ({'type': 'ineq', 'fun': lambda b: max_leverage - sum(b)},)
+        cons = ({'type': 'eq', 'fun': lambda b: max_leverage - sum(b)},)
     
         while True:
             # problem optimization

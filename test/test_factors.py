@@ -11,7 +11,7 @@ import pandas as pd
 class Test(unittest.TestCase):
 
 
-    def testMomentum(self):
+    def test_momentum(self):
         numdays=10
         base = datetime.datetime.today()
         base = base.replace(hour=0, minute=0, second=0, microsecond=0)

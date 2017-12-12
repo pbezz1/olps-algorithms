@@ -9,7 +9,7 @@ import datetime
 
 class Test(unittest.TestCase):
 
-    def test(self):
+    def test_filter(self):
         filter = Filter(file_path='../../test_data/filter/Test.csv')
         
         date = datetime.datetime.strptime('1/3/2002', "%m/%d/%Y").date() 

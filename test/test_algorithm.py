@@ -9,7 +9,7 @@ from datetime import datetime
 
 class Test(unittest.TestCase):
 
-    def testRebalanceMonthly(self):
+    def test_rebalance_monthly(self):
         algorithm = Algorithm()
         algorithm.rebalance_period='monthly'
         algorithm.rebalance_window=1

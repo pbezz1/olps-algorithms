@@ -89,7 +89,8 @@ class TestLoadFactors(unittest.TestCase):
         
     def test_create_momentum_factor(self):
         asset = Asset('Test')
-        prices = pd.DataFrame([10,10,10,10,10,10,10,5,5,5],columns=['close'])
+        prices_list=[10,10,10,10,10,10,10,5,5,5]
+        prices = pd.DataFrame(prices_list,columns=['close'])
         numdays=len(prices)
         base = datetime.datetime.today()
         base = base.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -103,7 +104,7 @@ class TestLoadFactors(unittest.TestCase):
         factor_df = asset.get_factor(factor_name)
         
         self.assertTrue(not factor_df.empty, "factor dont exist")
-        self.assertAlmostEqual(factor_df[factor_name][0], 5./(sum([10,10,10,10,10,10,10,5,5,5])/10), 4, "factor not equal")        
+        self.assertAlmostEqual(factor_df[factor_name][0], 5./(sum(prices_list)*1.0/len(prices_list)), 4, "factor not equal")        
 
 if __name__ == '__main__':
     unittest.main()
