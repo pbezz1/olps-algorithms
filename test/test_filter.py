@@ -14,11 +14,11 @@ class Test(unittest.TestCase):
         
         date = datetime.datetime.strptime('1/3/2002', "%m/%d/%Y").date() 
         
-        self.assertTrue(filter.isWhiteListed('ABEV3',date), 'filter not working')
-        self.assertFalse(filter.isWhiteListed('NEXISTE4',date), 'filter not working')
+        self.assertTrue(filter.is_white_listed('ABEV3',date), 'filter not working')
+        self.assertFalse(filter.is_white_listed('NEXISTE4',date), 'filter not working')
         
         """date = datetime.datetime.strptime("1/1/2000", "%m/%d/%Y").date() 
-        'self.assertRaises(KeyError, filter.isWhiteListed('TEST',date))
+        'self.assertRaises(KeyError, filter.is_white_listed('TEST',date))
         """
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

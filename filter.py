@@ -23,7 +23,7 @@ class Filter():
             self._data.set_value(index, 'set', s)
         self._data=self._data[['set']]
     
-    def isWhiteListed(self,asset,date):
+    def is_white_listed(self,asset,date):
         """ check if given asset is tradable in given date
         :asset string with asset name
         :date datetime
@@ -36,3 +36,10 @@ class Filter():
                 return True
             else:
                 raise KeyError("filter does not contain date:"+date.strftime('%m/%d/%Y'))
+            
+    def get_tradable_assets(self,date):
+        if(date in self._data.index):
+            row = self._data.loc[date]
+            return row['set']
+        else:
+            raise KeyError("filter does not contain date:"+date.strftime('%m/%d/%Y'))
