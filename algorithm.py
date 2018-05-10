@@ -147,17 +147,7 @@ class Algorithm(object):
         target_rebalance=np.sum(last_weights_individual_returns)
         new_weights_individual_returns=target_rebalance*current_weights
         turnover=np.sum(np.abs(new_weights_individual_returns-last_weights_individual_returns))
-        return turnover
-    
-    def calculate_turnover2(self, current_weights, last_weights, current_individual_returns,iteration):
-        if(iteration>0):
-            last_weights_individual_returns=current_individual_returns*last_weights
-            target_rebalance=np.sum(last_weights_individual_returns[last_weights > 0.0])
-            new_weights_individual_returns=target_rebalance*current_weights
-            turnover=np.sum(np.abs(new_weights_individual_returns-last_weights_individual_returns))
-            return turnover
-        else:
-            return 1.0 #iteration 0
+        return turnover,target_rebalance
     
     def trim_front(self, arr, trim_value):
         idx=0

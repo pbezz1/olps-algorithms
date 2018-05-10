@@ -48,7 +48,8 @@ class AlgorithmResult():
         benchmark_name=os.path.splitext(benchmark_name)[0]
         if(benchmark_name in self.data.columns):
             return benchmark_name
-        benchmark_data=pd.DataFrame.from_csv(file_path)
+        benchmark_data=pd.read_csv(file_path,index_col=0,header=None)
+        benchmark_data.index=pd.to_datetime(benchmark_data.index)
         if(len(benchmark_data.columns) != 1):
             raise Exception('something is wrong with benchmark file')
             return
